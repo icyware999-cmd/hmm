@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 const SMTP_PORT = 2525;
 const DB_PATH = path.join(__dirname, 'database.json');
 const SCRIPTS_DIR = path.join(__dirname, 'scripts');
