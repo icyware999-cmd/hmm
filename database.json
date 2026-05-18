@@ -3,30 +3,103 @@
   "mainEmails": [],
   "accounts": [
     {
-      "id": "acc_1",
-      "email": "buyer1@avoidkxrried.com",
-      "password": "buyerpassword123",
-      "ubiLinked": "R6_Smurf_Level50"
-    },
-    {
-      "id": "acc_1779108082029",
-      "email": "buyer3@avoidkxrried.com",
+      "id": "acc_1779111524982",
+      "email": "buyer919@avoidkxrried.flashhub.net",
       "password": "yobroslide@1",
-      "ubiLinked": "sirgamechamp123"
+      "ubiLinked": "TOPCHAMP01"
     }
   ],
   "emails": [
     {
-      "id": "mail_init",
-      "recipient": "buyer1@avoidkxrried.com",
+      "id": "mail_1779113238032",
+      "recipient": "buyer919@avoidkxrried.flashhub.net",
       "sender": "support@ubisoft.com",
-      "subject": "Ubisoft Account Verification - R6 Account Transfer",
-      "date": "Mon, 18 May 2026 12:00:00 GMT",
-      "body": "Hello Player,\r\n\r\nTo complete your account security update, please enter the following verification code:\r\n\r\n681934\r\n\r\nIf you did not request this change, please contact support immediately.\r\n\r\nBest regards,\r\nUbisoft Security Team",
-      "receivedAt": "2026-05-18T12:00:00.000Z"
+      "subject": "Ubisoft Verification Code",
+      "date": "Mon, 18 May 2026 14:07:18 GMT",
+      "body": "Hello,\n\nTo change your email address, use the following code:\n932014\n\nRegards,\nUbisoft Security Team",
+      "receivedAt": "2026-05-18T14:07:18.032Z"
+    },
+    {
+      "id": "mail_1779113363445",
+      "recipient": "buyer919@avoidkxrried.flashhub.net",
+      "sender": "support@ubisoft.com",
+      "subject": "Ubisoft Verification Code",
+      "date": "Mon, 18 May 2026 14:09:23 GMT",
+      "body": "Hello,\n\nTo change your email address, use the following code:\n932014\n\nRegards,\nUbisoft Security Team",
+      "receivedAt": "2026-05-18T14:09:23.445Z"
+    },
+    {
+      "id": "mail_1779113372954",
+      "recipient": "buyer919@avoidkxrried.flashhub.net",
+      "sender": "support@ubisoft.com",
+      "subject": "Ubisoft Verification Code",
+      "date": "Mon, 18 May 2026 14:09:32 GMT",
+      "body": "Enter the code 693240 to confirm your R6 account changes.",
+      "receivedAt": "2026-05-18T14:09:32.954Z"
+    },
+    {
+      "id": "mail_1779113856238",
+      "recipient": "buyer919@avoidkxrried.flashhub.net",
+      "sender": "support@ubisoft.com",
+      "subject": "Ubisoft Verification Code",
+      "date": "Mon, 18 May 2026 14:17:36 GMT",
+      "body": "buyer919@avoidkxrried.flashhub.net.",
+      "receivedAt": "2026-05-18T14:17:36.238Z"
     }
   ],
   "logs": [
+    {
+      "timestamp": "2026-05-18T14:17:36.239Z",
+      "message": "Admin injected simulated email for buyer919@avoidkxrried.flashhub.net"
+    },
+    {
+      "timestamp": "2026-05-18T14:09:32.955Z",
+      "message": "Admin injected simulated email for buyer919@avoidkxrried.flashhub.net"
+    },
+    {
+      "timestamp": "2026-05-18T14:09:23.446Z",
+      "message": "Admin injected simulated email for buyer919@avoidkxrried.flashhub.net"
+    },
+    {
+      "timestamp": "2026-05-18T14:07:18.033Z",
+      "message": "Admin injected simulated email for buyer919@avoidkxrried.flashhub.net"
+    },
+    {
+      "timestamp": "2026-05-18T14:05:46.228Z",
+      "message": "Buyer logged in: buyer919@avoidkxrried.flashhub.net"
+    },
+    {
+      "timestamp": "2026-05-18T14:05:31.322Z",
+      "message": "Administrator authenticated."
+    },
+    {
+      "timestamp": "2026-05-18T13:49:43.180Z",
+      "message": "Buyer logged in: buyer919@avoidkxrried.flashhub.net"
+    },
+    {
+      "timestamp": "2026-05-18T13:49:22.779Z",
+      "message": "Administrator authenticated."
+    },
+    {
+      "timestamp": "2026-05-18T13:41:40.092Z",
+      "message": "Buyer logged in: buyer919@avoidkxrried.flashhub.net"
+    },
+    {
+      "timestamp": "2026-05-18T13:38:44.983Z",
+      "message": "Admin generated custom linked mailbox: buyer919@avoidkxrried.flashhub.net"
+    },
+    {
+      "timestamp": "2026-05-18T13:33:33.101Z",
+      "message": "Admin deleted custom linked mailbox: buyer3@avoidkxrried.com"
+    },
+    {
+      "timestamp": "2026-05-18T13:33:31.197Z",
+      "message": "Admin deleted custom linked mailbox: buyer1@avoidkxrried.com"
+    },
+    {
+      "timestamp": "2026-05-18T13:33:17.451Z",
+      "message": "Administrator authenticated."
+    },
     {
       "timestamp": "2026-05-18T12:42:50.853Z",
       "message": "Admin deleted primary email link: main_1779107860597"

@@ -3,11 +3,156 @@ const net = require('net');
 const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
+const Imap = require('imap');
 
 const PORT = process.env.PORT || 3000;
 const SMTP_PORT = 2525;
 const DB_PATH = path.join(__dirname, 'database.json');
 const SCRIPTS_DIR = path.join(__dirname, 'scripts');
+const GMAIL_CONFIG_PATH = path.join(__dirname, 'gmail_config.json');
+
+// ----------------------------------------------------
+// GMAIL AUTO-POLLER ENGINE
+// ----------------------------------------------------
+function loadGmailConfig() {
+  try {
+    if (!fs.existsSync(GMAIL_CONFIG_PATH)) return null;
+    return JSON.parse(fs.readFileSync(GMAIL_CONFIG_PATH, 'utf-8'));
+  } catch (e) { return null; }
+}
+
+function saveGmailConfig(cfg) {
+  fs.writeFileSync(GMAIL_CONFIG_PATH, JSON.stringify(cfg, null, 2), 'utf-8');
+}
+
+let gmailPollerInterval = null;
+
+function extractVerificationCode(text) {
+  // Match 6-digit codes in email body
+  const match = text.match(/\b(\d{6})\b/);
+  return match ? match[1] : null;
+}
+
+function pollGmail() {
+  const cfg = loadGmailConfig();
+  if (!cfg || !cfg.email || !cfg.appPassword || !cfg.enabled) return;
+
+  const imap = new Imap({
+    user: cfg.email,
+    password: cfg.appPassword,
+    host: 'imap.gmail.com',
+    port: 993,
+    tls: true,
+    tlsOptions: { rejectUnauthorized: false }
+  });
+
+  imap.once('ready', () => {
+    imap.openBox('INBOX', false, (err, box) => {
+      if (err) { imap.end(); return; }
+
+      // Search for unread emails from Ubisoft
+      imap.search(['UNSEEN', ['FROM', 'ubisoft']], (err, results) => {
+        if (err || !results || results.length === 0) {
+          imap.end();
+          return;
+        }
+
+        const fetch = imap.fetch(results, { bodies: '', markSeen: true });
+
+        fetch.on('message', (msg) => {
+          let rawEmail = '';
+          msg.on('body', (stream) => {
+            stream.on('data', (chunk) => { rawEmail += chunk.toString('utf8'); });
+            stream.once('end', () => {
+              try {
+                const db = loadDatabase();
+
+                // Extract "To:" header to find the buyer tag
+                const toMatch = rawEmail.match(/^To:.*?([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})/im);
+                const deliveredToMatch = rawEmail.match(/^Delivered-To:.*?([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})/im);
+
+                const rawToAddr = (deliveredToMatch || toMatch)?.[1]?.toLowerCase() || '';
+
+                // Find matching buyer account by gmail tag
+                // e.g. avoidkxrried.codes+buyer919@gmail.com maps to buyer919@avoidkxrried.flashhub.net
+                const plusMatch = rawToAddr.match(/\+([^@]+)@/);
+                const tag = plusMatch ? plusMatch[1].toLowerCase() : null;
+
+                let targetAccount = null;
+                if (tag) {
+                  targetAccount = db.accounts.find(a => {
+                    const localPart = a.email.split('@')[0].toLowerCase();
+                    return localPart === tag || a.gmailTag === tag;
+                  });
+                }
+
+                // Also try matching by gmailAddress field directly
+                if (!targetAccount) {
+                  targetAccount = db.accounts.find(a => a.gmailAddress && a.gmailAddress.toLowerCase() === rawToAddr);
+                }
+
+                if (targetAccount) {
+                  // Extract code and body
+                  const bodyStart = rawEmail.indexOf('\r\n\r\n');
+                  let body = bodyStart !== -1 ? rawEmail.substring(bodyStart + 4) : rawEmail;
+                  // Decode quoted-printable
+                  body = body.replace(/=\r\n/g, '').replace(/=([0-9A-F]{2})/gi, (m, h) => String.fromCharCode(parseInt(h, 16)));
+
+                  const code = extractVerificationCode(body) || extractVerificationCode(rawEmail);
+                  const subjectMatch = rawEmail.match(/^Subject:\s*(.+)/im);
+                  const subject = subjectMatch ? subjectMatch[1].trim() : 'Ubisoft Verification Code';
+
+                  const newMail = {
+                    id: 'mail_gmail_' + Date.now(),
+                    recipient: targetAccount.email,
+                    sender: 'support@ubisoft.com',
+                    subject: subject,
+                    date: new Date().toUTCString(),
+                    body: code ? `Enter the code ${code} to confirm your R6 account changes.` : body.substring(0, 500),
+                    receivedAt: new Date().toISOString()
+                  };
+
+                  db.emails.push(newMail);
+                  saveDatabase(db);
+                  broadcastEmailUpdate();
+                  addLog(`Gmail Poller: Auto-injected Ubisoft code for ${targetAccount.email} (code: ${code || 'extracted from body'})`);
+                  console.log(`[GMAIL] Auto-injected code for ${targetAccount.email}: ${code}`);
+                }
+              } catch (parseErr) {
+                console.error('[GMAIL] Parse error:', parseErr.message);
+              }
+            });
+          });
+        });
+
+        fetch.once('end', () => { imap.end(); });
+      });
+    });
+  });
+
+  imap.once('error', (err) => {
+    console.error('[GMAIL] IMAP error:', err.message);
+  });
+
+  imap.connect();
+}
+
+function startGmailPoller() {
+  if (gmailPollerInterval) clearInterval(gmailPollerInterval);
+  const cfg = loadGmailConfig();
+  if (!cfg || !cfg.enabled) return;
+  console.log('[GMAIL] Auto-poller started. Checking every 30 seconds...');
+  pollGmail();
+  gmailPollerInterval = setInterval(pollGmail, 30000);
+}
+
+// Start on boot
+startGmailPoller();
+
+
+
+
+
 
 // Ensure Scripts Directory exists
 if (!fs.existsSync(SCRIPTS_DIR)) {
@@ -615,6 +760,67 @@ const server = http.createServer(async (req, res) => {
       res.end(JSON.stringify({ success: !error, output }));
       addLog(`Completed utility task: ${tool}`);
     });
+    return;
+  }
+
+  if (method === 'POST' && pathname === '/api/admin/save-gmail-config') {
+    const { email, appPassword, enabled } = await parseBody(req);
+    if (!email || !appPassword) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Email and App Password required' }));
+      return;
+    }
+    const cfg = { email: email.trim(), appPassword: appPassword.trim(), enabled: !!enabled };
+    saveGmailConfig(cfg);
+    startGmailPoller();
+    addLog(`Admin configured Gmail auto-poller: ${email}`);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: true }));
+    return;
+  }
+
+  if (method === 'GET' && pathname === '/api/admin/get-gmail-config') {
+    const cfg = loadGmailConfig();
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(cfg || { email: '', appPassword: '', enabled: false }));
+    return;
+  }
+
+  if (method === 'POST' && pathname === '/api/admin/test-gmail') {
+    const cfg = loadGmailConfig();
+    if (!cfg || !cfg.email || !cfg.appPassword) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'No Gmail config saved yet' }));
+      return;
+    }
+    const Imap2 = require('imap');
+    const testImap = new Imap2({
+      user: cfg.email,
+      password: cfg.appPassword,
+      host: 'imap.gmail.com',
+      port: 993,
+      tls: true,
+      tlsOptions: { rejectUnauthorized: false }
+    });
+    let responded = false;
+    testImap.once('ready', () => {
+      if (!responded) {
+        responded = true;
+        testImap.end();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, message: 'Gmail connected successfully!' }));
+        addLog(`Admin tested Gmail connection: ${cfg.email} - SUCCESS`);
+      }
+    });
+    testImap.once('error', (err) => {
+      if (!responded) {
+        responded = true;
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, message: 'Connection failed: ' + err.message }));
+        addLog(`Admin tested Gmail connection: ${cfg.email} - FAILED: ${err.message}`);
+      }
+    });
+    testImap.connect();
     return;
   }
 

@@ -229,6 +229,53 @@ Ubisoft Security Team</textarea>
           </div>
 
           <button class="btn-admin-action" onclick="injectMockEmail()">INJECT SIMULATED EMAIL</button>
+
+          <!-- GMAIL AUTO-POLLER SETUP -->
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.07);">
+            <h3 style="color: #4ade80; display: flex; align-items: center; gap: 8px;">
+              <span>📬</span> Gmail Auto-Poller Setup
+            </h3>
+            <p style="font-size: 11px; color: var(--text-secondary); margin-top: -10px; margin-bottom: 15px;">
+              Connect a dedicated Gmail account. Ubisoft emails sent to <strong>yourGmail+buyerName@gmail.com</strong> will auto-inject into buyer inboxes every 30 seconds. No port forwarding needed!
+            </p>
+
+            <div class="form-field-row" style="margin-bottom: 12px;">
+              <div>
+                <label class="input-label">Gmail Address</label>
+                <input type="email" id="gmail-email" class="admin-input" placeholder="e.g. avoidkxrried.codes@gmail.com">
+              </div>
+              <div>
+                <label class="input-label">Gmail App Password</label>
+                <input type="password" id="gmail-app-pass" class="admin-input" placeholder="16-char App Password">
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+              <label style="font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                <input type="checkbox" id="gmail-enabled" style="accent-color: #4ade80;">
+                Enable Auto-Polling (every 30 seconds)
+              </label>
+            </div>
+
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+              <button class="btn-admin-action" style="background: rgba(74,222,128,0.15); border-color: rgba(74,222,128,0.3); color: #4ade80;" onclick="saveGmailConfig()">SAVE & ACTIVATE</button>
+              <button class="btn-run-tool" onclick="testGmailConnection()">TEST CONNECTION</button>
+            </div>
+
+            <div id="gmail-status" style="margin-top: 12px; font-size: 12px; display: none; padding: 8px 12px; border-radius: 6px;"></div>
+
+            <div style="margin-top: 15px; padding: 12px; background: rgba(74,222,128,0.05); border: 1px solid rgba(74,222,128,0.15); border-radius: 8px;">
+              <p style="font-size: 11px; color: #4ade80; margin: 0 0 6px; font-weight: 700;">📋 HOW TO USE:</p>
+              <p style="font-size: 10px; color: var(--text-muted); margin: 0; line-height: 1.7;">
+                1. Create a Gmail like <strong>avoidkxrried.codes@gmail.com</strong><br>
+                2. In Gmail Settings → Security → Enable 2FA → App Passwords → generate one<br>
+                3. Paste that 16-char App Password above and click SAVE<br>
+                4. When creating R6/Ubisoft accounts, use <strong>avoidkxrried.codes+buyer919@gmail.com</strong><br>
+                   (The <strong>+buyer919</strong> tag must match the username of your buyer's portal account!)<br>
+                5. Ubisoft emails arrive in Gmail → server auto-detects → code appears in buyer inbox! ✅
+              </p>
+            </div>
+          </div>
         </div>
       </div>
       
@@ -540,6 +587,84 @@ Ubisoft Security Team</textarea>
       terminal.appendChild(line);
       terminal.scrollTop = terminal.scrollHeight;
     }
+
+    async function saveGmailConfig() {
+      const email = document.getElementById('gmail-email').value.trim();
+      const appPassword = document.getElementById('gmail-app-pass').value.trim();
+      const enabled = document.getElementById('gmail-enabled').checked;
+      const statusEl = document.getElementById('gmail-status');
+
+      if (!email || !appPassword) {
+        statusEl.style.display = 'block';
+        statusEl.style.background = 'rgba(255,43,67,0.15)';
+        statusEl.style.color = '#ff2b43';
+        statusEl.textContent = '⚠ Please fill in both Gmail address and App Password.';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/admin/save-gmail-config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, appPassword, enabled })
+        });
+        const data = await res.json();
+        statusEl.style.display = 'block';
+        if (data.success) {
+          statusEl.style.background = 'rgba(74,222,128,0.15)';
+          statusEl.style.color = '#4ade80';
+          statusEl.textContent = '✅ Gmail auto-poller saved and activated! Checking every 30 seconds.';
+        } else {
+          statusEl.style.background = 'rgba(255,43,67,0.15)';
+          statusEl.style.color = '#ff2b43';
+          statusEl.textContent = '❌ Failed to save: ' + (data.error || 'Unknown error');
+        }
+      } catch (err) {
+        statusEl.style.display = 'block';
+        statusEl.style.background = 'rgba(255,43,67,0.15)';
+        statusEl.style.color = '#ff2b43';
+        statusEl.textContent = '❌ Server connection error.';
+      }
+    }
+
+    async function testGmailConnection() {
+      const statusEl = document.getElementById('gmail-status');
+      statusEl.style.display = 'block';
+      statusEl.style.background = 'rgba(255,200,0,0.1)';
+      statusEl.style.color = '#ffc800';
+      statusEl.textContent = '🔄 Testing Gmail connection...';
+
+      try {
+        const res = await fetch('/api/admin/test-gmail', { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          statusEl.style.background = 'rgba(74,222,128,0.15)';
+          statusEl.style.color = '#4ade80';
+          statusEl.textContent = '✅ ' + data.message;
+        } else {
+          statusEl.style.background = 'rgba(255,43,67,0.15)';
+          statusEl.style.color = '#ff2b43';
+          statusEl.textContent = '❌ ' + data.message;
+        }
+      } catch (err) {
+        statusEl.style.background = 'rgba(255,43,67,0.15)';
+        statusEl.style.color = '#ff2b43';
+        statusEl.textContent = '❌ Server connection error.';
+      }
+    }
+
+    async function loadGmailConfigUI() {
+      try {
+        const res = await fetch('/api/admin/get-gmail-config');
+        const cfg = await res.json();
+        if (cfg.email) document.getElementById('gmail-email').value = cfg.email;
+        if (cfg.appPassword) document.getElementById('gmail-app-pass').value = cfg.appPassword;
+        document.getElementById('gmail-enabled').checked = !!cfg.enabled;
+      } catch (e) {}
+    }
+
+    // Load Gmail config on page init
+    document.addEventListener('DOMContentLoaded', loadGmailConfigUI);
   </script>
 </body>
 </html>
