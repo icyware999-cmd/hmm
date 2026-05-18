@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# Production builds
+dist/
+public/index.html (if compiled from Astro, but let's keep public for express static)
+.astro/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# System files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,79 @@
+{
+  "adminPassword": "avoidkxrried_owner",
+  "mainEmails": [],
+  "accounts": [
+    {
+      "id": "acc_1",
+      "email": "buyer1@avoidkxrried.com",
+      "password": "buyerpassword123",
+      "ubiLinked": "R6_Smurf_Level50"
+    },
+    {
+      "id": "acc_1779108082029",
+      "email": "buyer3@avoidkxrried.com",
+      "password": "yobroslide@1",
+      "ubiLinked": "sirgamechamp123"
+    }
+  ],
+  "emails": [
+    {
+      "id": "mail_init",
+      "recipient": "buyer1@avoidkxrried.com",
+      "sender": "support@ubisoft.com",
+      "subject": "Ubisoft Account Verification - R6 Account Transfer",
+      "date": "Mon, 18 May 2026 12:00:00 GMT",
+      "body": "Hello Player,\r\n\r\nTo complete your account security update, please enter the following verification code:\r\n\r\n681934\r\n\r\nIf you did not request this change, please contact support immediately.\r\n\r\nBest regards,\r\nUbisoft Security Team",
+      "receivedAt": "2026-05-18T12:00:00.000Z"
+    }
+  ],
+  "logs": [
+    {
+      "timestamp": "2026-05-18T12:42:50.853Z",
+      "message": "Admin deleted primary email link: main_1779107860597"
+    },
+    {
+      "timestamp": "2026-05-18T12:41:22.030Z",
+      "message": "Admin generated custom linked mailbox: buyer3@avoidkxrried.com"
+    },
+    {
+      "timestamp": "2026-05-18T12:39:00.045Z",
+      "message": "Completed utility task: clean_temp"
+    },
+    {
+      "timestamp": "2026-05-18T12:38:32.501Z",
+      "message": "Running administrator optimization utility: clean_temp"
+    },
+    {
+      "timestamp": "2026-05-18T12:37:50.357Z",
+      "message": "Completed utility task: sus_login"
+    },
+    {
+      "timestamp": "2026-05-18T12:37:45.052Z",
+      "message": "Running administrator optimization utility: sus_login"
+    },
+    {
+      "timestamp": "2026-05-18T12:37:40.598Z",
+      "message": "Admin registered primary tracked email: 24asanabria@blatchingonmill.org.uk"
+    },
+    {
+      "timestamp": "2026-05-18T12:36:42.181Z",
+      "message": "Admin deleted primary email link: 1"
+    },
+    {
+      "timestamp": "2026-05-18T12:35:51.765Z",
+      "message": "Completed utility task: sus_login"
+    },
+    {
+      "timestamp": "2026-05-18T12:35:45.576Z",
+      "message": "Running administrator optimization utility: sus_login"
+    },
+    {
+      "timestamp": "2026-05-18T12:30:32.764Z",
+      "message": "Administrator authenticated."
+    },
+    {
+      "timestamp": "2026-05-18T12:00:00.000Z",
+      "message": "System initialized. avoidkxrried Engine running."
+    }
+  ]
+}
