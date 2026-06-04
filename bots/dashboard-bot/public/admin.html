@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dead Luna Admin</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{background:#0f0f1a;color:#fff;font-family:Arial}
+        .navbar{background:#1a1a2e;padding:15px 30px;border-bottom:2px solid #e94560}
+        .navbar h1{color:#e94560}
+        .container{display:flex}
+        .sidebar{width:250px;background:#16213e;padding:20px;min-height:100vh}
+        .sidebar button{width:100%;padding:12px;margin:5px 0;background:#0f0f1a;border:none;color:#fff;border-radius:5px;cursor:pointer}
+        .sidebar button:hover{background:#e94560}
+        .content{flex:1;padding:20px}
+        .search-box{display:flex;gap:10px;margin-bottom:20px}
+        .search-box input{flex:1;padding:12px;background:#16213e;border:none;color:#fff;border-radius:5px}
+        .search-box button{padding:12px 24px;background:#e94560;border:none;border-radius:5px;color:#fff;cursor:pointer}
+        .card{background:#16213e;border-radius:10px;padding:20px;margin-bottom:20px}
+        .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px}
+        .stat-item{background:#0f0f1a;padding:15px;border-radius:8px;text-align:center}
+        .stat-value{font-size:24px;font-weight:bold;color:#e94560}
+        .ban-btn{background:#e94560;border:none;padding:5px 10px;border-radius:5px;color:#fff;cursor:pointer}
+        .live{animation:pulse 1s infinite;color:#00ff00}
+        @keyframes pulse{0%{opacity:1}50%{opacity:0.5}100%{opacity:1}}
+        .live-match{background:#16213e;margin:10px 0;padding:15px;border-radius:8px;border-left:3px solid #e94560}
+    </style>
+</head>
+<body>
+<div class="navbar"><h1>🔫 DEAD LUNA ADMIN</h1></div>
+<div class="container">
+    <div class="sidebar">
+        <button onclick="showSection('search')">🔍 Search</button>
+        <button onclick="showSection('live')">🎮 Live Matches</button>
+        <button onclick="showSection('leaderboard')">🏆 Leaderboard</button>
+    </div>
+    <div class="content">
+        <div id="searchSection">
+            <div class="search-box"><input id="searchInput" placeholder="Roblox username"><button onclick="searchPlayer()">Search</button></div>
+            <div id="playerInfo"></div>
+        </div>
+        <div id="liveSection" style="display:none"><h2>🎮 Live Matches <span class="live">● LIVE</span></h2><div id="liveMatches"></div></div>
+        <div id="leaderboardSection" style="display:none"><h2>🏆 Leaderboard</h2><div id="leaderboardList"></div></div>
+    </div>
+</div>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
+socket.on('live-matches', (matches) => {
+    const container = document.getElementById('liveMatches');
+    if(!matches.length){container.innerHTML='<p>No matches</p>';return}
+    container.innerHTML = matches.map(m=>`<div class="live-match"><strong>${m.map_name}</strong> - ${m.mode_name}<br>${m.players.map(p=>`• ${p.username}: ${p.kills}/${p.deaths}`).join('<br>')}</div>`).join('');
+});
+
+async function searchPlayer(){
+    const username = document.getElementById('searchInput').value;
+    if(!username)return;
+    const res = await fetch(`/api/player/${username}`);
+    const data = await res.json();
+    if(data.error){document.getElementById('playerInfo').innerHTML=`<p>${data.error}</p>`;return}
+    document.getElementById('playerInfo').innerHTML=`
+        <div class="card"><h2>${data.player.username}</h2>
+        <div class="stat-grid"><div class="stat-item"><div class="stat-value">${data.stats.rank_name||'Copper 5'}</div><div>Rank</div></div>
+        <div class="stat-item"><div class="stat-value">${data.stats.mmr||0}</div><div>MMR</div></div>
+        <div class="stat-item"><div class="stat-value">${data.stats.total_kills||0}</div><div>Kills</div></div>
+        <div class="stat-item"><div class="stat-value">${data.stats.total_reports_received||0}</div><div>Reports</div></div></div>
+        ${data.stats.is_banned ? '<div style="background:#e94560;padding:10px;border-radius:8px">⚠️ BANNED</div>' : 
+        '<div><input id="banReason" placeholder="Reason"><select id="banDuration"><option value="1h">1 Hour</option><option value="6h">6 Hours</option><option value="12h">12 Hours</option><option value="1d">1 Day</option><option value="3d">3 Days</option><option value="7d">7 Days</option><option value="perm">Permanent</option></select><button class="ban-btn" onclick="banPlayer(${data.player.roblox_id})">Ban Player</button></div>'}
+        </div>`;
+}
+
+async function banPlayer(robloxId){
+    const reason = document.getElementById('banReason')?.value;
+    const duration = document.getElementById('banDuration')?.value;
+    if(!reason){alert('Enter reason');return}
+    const res = await fetch('/api/ban',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({robloxId,duration,reason})});
+    const data = await res.json();
+    if(data.success)alert('Player banned!');
+    else alert('Error');
+}
+
+async function loadLeaderboard(){
+    const res = await fetch('/api/leaderboard?limit=50');
+    const players = await res.json();
+    document.getElementById('leaderboardList').innerHTML=`<table style="width:100%"><tr><th>#</th><th>Username</th><th>Rank</th><th>MMR</th></tr>${players.map((p,i)=>`<tr><td>${i+1}</td><td>${p.username}</td><td>${p.rank_name}</td><td>${p.mmr}</td></tr>`).join('')}</table>`;
+}
+
+function showSection(section){
+    document.getElementById('searchSection').style.display = section==='search'?'block':'none';
+    document.getElementById('liveSection').style.display = section==='live'?'block':'none';
+    document.getElementById('leaderboardSection').style.display = section==='leaderboard'?'block':'none';
+    if(section==='leaderboard')loadLeaderboard();
+}
+</script>
+</body>
+</html>

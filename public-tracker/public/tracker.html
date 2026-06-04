@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dead Luna Tracker</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{background:#0a0a0f;color:#fff;font-family:Arial}
+        .header{background:linear-gradient(135deg,#1a1a2e,#16213e);padding:30px;text-align:center;border-bottom:2px solid #e94560}
+        .header h1{font-size:48px;color:#e94560}
+        .search-section{padding:40px;text-align:center}
+        .search-box{display:flex;max-width:500px;margin:0 auto;gap:10px}
+        .search-box input{flex:1;padding:15px;background:#1a1a2e;border:none;color:#fff;border-radius:10px}
+        .search-box button{padding:15px 30px;background:#e94560;border:none;border-radius:10px;color:#fff;cursor:pointer}
+        .container{max-width:1200px;margin:0 auto;padding:20px}
+        .profile-card{background:#16213e;border-radius:15px;padding:25px;margin-bottom:30px}
+        .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px;margin-top:20px}
+        .stat-card{background:#0f0f1a;padding:20px;border-radius:10px;text-align:center}
+        .stat-value{font-size:32px;font-weight:bold;color:#e94560}
+        .match-list{background:#16213e;border-radius:15px;padding:20px}
+        .match-item{border-bottom:1px solid #2a2a3e;padding:15px;display:flex;justify-content:space-between;flex-wrap:wrap}
+        .rank-badge{display:inline-block;padding:4px 12px;border-radius:20px}
+        .copper{background:#8B5A2B}.bronze{background:#CD7F32}.silver{background:#C0C0C0;color:#000}.gold{background:#FFD700;color:#000}.platinum{background:#00BFFF}.diamond{background:#00CED1}.champion{background:#FF4444}
+        .tag{background:#e94560;padding:2px 8px;border-radius:4px;font-size:11px;margin-left:5px}
+        @media(max-width:768px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
+    </style>
+</head>
+<body>
+<div class="header"><h1>🔫 DEAD LUNA TRACKER</h1><p>Track stats, match history, and leaderboards</p></div>
+<div class="search-section"><div class="search-box"><input id="searchInput" placeholder="Roblox username" onkeypress="if(event.key==='Enter')search()"><button onclick="search()">Search</button></div></div>
+<div class="container" id="results"><div class="search-section">🔍 Search for a player</div></div>
+<script>
+async function search(){
+    const username = document.getElementById('searchInput').value;
+    if(!username)return;
+    document.getElementById('results').innerHTML='<div class="search-section">Loading...</div>';
+    const res = await fetch(`/api/player/${username}`);
+    const data = await res.json();
+    if(data.error){document.getElementById('results').innerHTML=`<div class="search-section">❌ ${data.error}</div>`;return}
+    const rankClass = getRankClass(data.stats.rank_name);
+    document.getElementById('results').innerHTML=`
+        <div class="profile-card"><h2>${data.player.username}</h2>
+        <span class="rank-badge ${rankClass}">${data.stats.rank_name||'Copper 5'}</span>
+        <div class="stats-grid">
+            <div class="stat-card"><div class="stat-value">${data.stats.mmr||0}</div><div>MMR</div></div>
+            <div class="stat-card"><div class="stat-value">${data.kd}</div><div>K/D</div></div>
+            <div class="stat-card"><div class="stat-value">${data.stats.total_wins||0}</div><div>Wins</div></div>
+            <div class="stat-card"><div class="stat-value">${data.stats.total_kills||0}</div><div>Kills</div></div>
+        </div></div>
+        <div class="match-list"><h3>📜 Recent Matches</h3>
+        ${data.recentMatches.map(m=>`<div class="match-item"><div><strong>${m.map_name}</strong> - ${m.mode_name}<br><small>${new Date(m.ended_at).toLocaleDateString()}</small></div>
+        <div>${m.kills}/${m.deaths}/${m.assists} ${m.special_tags?.map(t=>`<span class="tag">${t}</span>`).join('')||''}</div></div>`).join('')}
+        </div>`;
+}
+function getRankClass(n){const l=(n||'').toLowerCase();if(l.includes('copper'))return'copper';if(l.includes('bronze'))return'bronze';if(l.includes('silver'))return'silver';if(l.includes('gold'))return'gold';if(l.includes('platinum'))return'platinum';if(l.includes('diamond'))return'diamond';if(l.includes('champ'))return'champion';return'copper'}
+const urlParams=new URLSearchParams(window.location.search);const sp=urlParams.get('search');if(sp){document.getElementById('searchInput').value=sp;search()}
+</script>
+</body>
+</html>
